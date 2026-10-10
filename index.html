@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#152238">
+<title>My Work Hours</title>
+<style>
+:root{--navy:#152238;--blue:#2457c5;--pale:#eef3ff;--ink:#172033;--muted:#657084;--line:#e2e7ef;--bg:#f5f7fb;--green:#137547;--red:#b42318}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{background:var(--navy);color:white;padding:24px 18px 22px;padding-top:calc(22px + env(safe-area-inset-top))}
+header h1{font-size:25px;margin:0 0 5px}header p{margin:0;color:#d5deed;font-size:14px}
+main{max-width:760px;margin:0 auto;padding:16px 14px 42px}
+.card{background:white;border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px #16233a08}
+h2{font-size:17px;margin:0 0 14px}.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.stat{background:#f7f9fc;border-radius:12px;padding:13px}.stat .label{font-size:12px;color:var(--muted);margin-bottom:7px}.stat .num{font-size:24px;font-weight:750;letter-spacing:-.5px}.stat .sub{font-size:12px;color:var(--muted);margin-top:5px}
+label{display:block;font-size:13px;font-weight:650;margin:0 0 6px;color:#354055}
+input,button{font:inherit}input[type=date],input[type=time],input[type=number],input[type=text]{width:100%;border:1px solid #cfd7e3;border-radius:10px;padding:11px 10px;background:white;color:var(--ink);min-height:44px}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.field{min-width:0}.field.full{grid-column:1/-1}
+button{border:0;border-radius:10px;padding:12px 14px;font-weight:700;cursor:pointer;min-height:44px}
+.primary{background:var(--blue);color:white;width:100%;margin-top:14px}.secondary{background:var(--pale);color:#1e469b}.danger{background:#fff0ef;color:var(--red)}.small{padding:7px 10px;min-height:34px;font-size:13px}
+.note{font-size:12px;color:var(--muted);line-height:1.45;margin:10px 0 0}
+.weekhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px}.weekhead h2{margin:0}
+.weeknav{display:flex;gap:6px}.weeknav button{padding:7px 10px;min-height:34px}
+.dayrow{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-top:1px solid var(--line);gap:12px}
+.dayrow:first-child{border-top:0}.dayname{font-weight:650}.daydate{font-size:12px;color:var(--muted);margin-top:3px}.hours{text-align:right;white-space:nowrap}.hours strong{display:block}.overtime{font-size:12px;color:var(--red);margin-top:3px}
+.entry{border-top:1px solid var(--line);padding:12px 0}.entry:first-child{border-top:0}.entrytop{display:flex;justify-content:space-between;gap:10px}.entrytitle{font-weight:700}.entrymeta{color:var(--muted);font-size:13px;margin-top:4px;line-height:1.5}.entryactions{display:flex;gap:6px;flex-shrink:0}
+.empty{color:var(--muted);font-size:14px;padding:8px 0}
+.footer{font-size:12px;color:var(--muted);text-align:center;padding:8px 10px 22px;line-height:1.5}
+@media(min-width:600px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))}.stat .num{font-size:22px}}
+</style>
+</head>
+<body>
+<header><h1>My Work Hours</h1><p>Track your shifts, daily overtime and weekly totals.</p></header>
+<main>
+<section class="card">
+<h2 id="formTitle">Add a shift</h2>
+<form id="shiftForm">
+<div class="formgrid">
+<div class="field full"><label for="workDate">Work date</label><input id="workDate" type="date" required></div>
+<div class="field"><label for="startTime">Start time</label><input id="startTime" type="time" value="09:00" required></div>
+<div class="field"><label for="endTime">End time</label><input id="endTime" type="time" value="17:00" required></div>
+<div class="field full"><label for="breakMins">Unpaid break (minutes)</label><input id="breakMins" type="number" min="0" max="720" step="5" value="30" required></div>
+</div>
+<p class="note">If your shift ends after midnight, enter the end time normally (earlier than the start time). The app will treat it as the next day. The shift is assigned to the date you started work.</p>
+<button class="primary" type="submit" id="saveBtn">Save shift</button>
+<button class="secondary" type="button" id="cancelEdit" style="display:none;width:100%;margin-top:8px">Cancel edit</button>
+</form>
+</section>
+
+<section class="card">
+<h2>This week</h2>
+<div class="stats">
+<div class="stat"><div class="label">Hours worked</div><div class="num" id="weekTotal">0.00</div><div class="sub">of 40 hours</div></div>
+<div class="stat"><div class="label">Over 40 hours</div><div class="num" id="weekOT">0.00</div><div class="sub">weekly threshold</div></div>
+<div class="stat"><div class="label">Daily overtime</div><div class="num" id="dailyOT">0.00</div><div class="sub">over 8 in a day</div></div>
+<div class="stat"><div class="label">Regular hours</div><div class="num" id="regularHours">0.00</div><div class="sub">hours up to daily 8</div></div>
+</div>
+<p class="note">Weekly overtime and daily overtime are shown as separate checks, so the same hours may appear in both figures. This is a personal tracker, not a determination of legal overtime pay.</p>
+</section>
+
+<section class="card">
+<div class="weekhead"><h2 id="weekLabel">Week overview</h2><div class="weeknav"><button class="secondary" id="prevWeek" aria-label="Previous week">‹</button><button class="secondary" id="thisWeek">Today</button><button class="secondary" id="nextWeek" aria-label="Next week">›</button></div></div>
+<div id="daysList"></div>
+</section>
+
+<section class="card">
+<div class="weekhead"><h2>Saved shifts</h2><button class="secondary small" id="exportCsv">Export CSV</button></div>
+<div id="entriesList"></div>
+<p class="note">Your records are saved in this browser on this device. Use Export CSV to keep a backup. Clearing Safari website data may erase saved records.</p>
+</section>
+<div class="footer">Personal timekeeping tool • Set your own work-hour thresholds as needed.</div>
+</main>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const STORAGE='myWorkHours_v1';
+let entries=[]; let editingId=null; let viewDate=new Date();
+const pad=n=>String(n).padStart(2,'0');
+const dateKey=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseDate=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d,12,0,0,0)};
+const addDays=(d,n)=>{let x=new Date(d);x.setDate(x.getDate()+n);return x};
+const mondayOf=d=>{let x=parseDate(dateKey(d));x.setDate(x.getDate()-((x.getDay()+6)%7));return x};
+const fmtDate=s=>parseDate(s).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+const fmtHours=n=>(Math.round((n+Number.EPSILON)*100)/100).toFixed(2);
+const weekDates=()=>{const start=mondayOf(viewDate);return Array.from({length:7},(_,i)=>addDays(start,i))};
+function duration(e){let [sh,sm]=e.start.split(':').map(Number),[eh,em]=e.end.split(':').map(Number);let a=sh*60+sm,b=eh*60+em;if(b<=a)b+=1440;return Math.max(0,(b-a-Math.max(0,Number(e.breakMins)||0))/60)}
+function load(){try{entries=JSON.parse(localStorage.getItem(STORAGE)||'[]');if(!Array.isArray(entries))entries=[]}catch(e){entries=[]}}
+function save(){localStorage.setItem(STORAGE,JSON.stringify(entries))}
+function currentWeekEntries(){const dates=weekDates();const a=dateKey(dates[0]),b=dateKey(dates[6]);return entries.filter(e=>e.date>=a&&e.date<=b)}
+function render(){
+const dates=weekDates(), list=currentWeekEntries(), byDate={};
+list.forEach(e=>byDate[e.date]=(byDate[e.date]||0)+duration(e));
+const total=list.reduce((s,e)=>s+duration(e),0);
+const dailyOT=Object.values(byDate).reduce((s,h)=>s+Math.max(0,h-8),0);
+const regular=Object.values(byDate).reduce((s,h)=>s+Math.min(8,h),0);
+$('weekTotal').textContent=fmtHours(total);$('weekOT').textContent=fmtHours(Math.max(0,total-40));$('dailyOT').textContent=fmtHours(dailyOT);$('regularHours').textContent=fmtHours(regular);
+$('weekLabel').textContent=`${dates[0].toLocaleDateString(undefined,{month:'short',day:'numeric'})} – ${dates[6].toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}`;
+$('daysList').innerHTML=dates.map(d=>{const k=dateKey(d),h=byDate[k]||0,ot=Math.max(0,h-8);return `<div class="dayrow"><div><div class="dayname">${d.toLocaleDateString(undefined,{weekday:'long'})}</div><div class="daydate">${d.toLocaleDateString(undefined,{month:'short',day:'numeric'})}</div></div><div class="hours"><strong>${fmtHours(h)} hrs</strong>${ot>0?`<div class="overtime">+${fmtHours(ot)} overtime</div>`:''}</div></div>`}).join('');
+const sorted=[...entries].sort((a,b)=>(b.date+b.start).localeCompare(a.date+a.start));
+$('entriesList').innerHTML=sorted.length?sorted.map(e=>`<div class="entry"><div class="entrytop"><div><div class="entrytitle">${fmtDate(e.date)} · ${fmtHours(duration(e))} hrs</div><div class="entrymeta">${e.start}–${e.end} · ${Number(e.breakMins)||0} min unpaid break</div></div><div class="entryactions"><button class="secondary small" data-edit="${e.id}">Edit</button><button class="danger small" data-delete="${e.id}">Delete</button></div></div></div>`).join(''):'<div class="empty">No shifts saved yet. Add your first shift above.</div>';
+}
+function resetForm(){editingId=null;$('shiftForm').reset();$('workDate').value=dateKey(new Date());$('startTime').value='09:00';$('endTime').value='17:00';$('breakMins').value='30';$('formTitle').textContent='Add a shift';$('saveBtn').textContent='Save shift';$('cancelEdit').style.display='none'}
+$('shiftForm').addEventListener('submit',e=>{e.preventDefault();const item={id:editingId||String(Date.now())+'_'+Math.random().toString(36).slice(2,7),date:$('workDate').value,start:$('startTime').value,end:$('endTime').value,breakMins:Number($('breakMins').value)||0};if(!item.date||!item.start||!item.end)return;if(item.breakMins<0||item.breakMins>720){alert('Please enter a break between 0 and 720 minutes.');return}if(editingId){entries=entries.map(x=>x.id===editingId?item:x)}else entries.push(item);save();viewDate=parseDate(item.date);resetForm();render()});
+$('cancelEdit').addEventListener('click',resetForm);
+$('entriesList').addEventListener('click',e=>{const ed=e.target.closest('[data-edit]'),del=e.target.closest('[data-delete]');if(ed){const item=entries.find(x=>x.id===ed.dataset.edit);if(!item)return;editingId=item.id;$('workDate').value=item.date;$('startTime').value=item.start;$('endTime').value=item.end;$('breakMins').value=item.breakMins;$('formTitle').textContent='Edit shift';$('saveBtn').textContent='Update shift';$('cancelEdit').style.display='block';window.scrollTo({top:0,behavior:'smooth'})}if(del){const item=entries.find(x=>x.id===del.dataset.delete);if(item&&confirm(`Delete the shift for ${fmtDate(item.date)}?`)){entries=entries.filter(x=>x.id!==item.id);save();render()}}});
+$('prevWeek').addEventListener('click',()=>{viewDate=addDays(viewDate,-7);render()});$('nextWeek').addEventListener('click',()=>{viewDate=addDays(viewDate,7);render()});$('thisWeek').addEventListener('click',()=>{viewDate=new Date();render()});
+$('exportCsv').addEventListener('click',()=>{if(!entries.length){alert('There are no shifts to export yet.');return}const rows=[['Date','Start','End','Unpaid break minutes','Hours worked','Daily overtime hours'],...entries.slice().sort((a,b)=>a.date.localeCompare(b.date)).map(e=>[e.date,e.start,e.end,e.breakMins,fmtHours(duration(e)),fmtHours(Math.max(0,entries.filter(x=>x.date===e.date).reduce((s,x)=>s+duration(x),0)-8))])];const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='work-hours.csv';a.click();URL.revokeObjectURL(url)});
+load();resetForm();render();
+})();
+</script>
+</body>
+</html>
